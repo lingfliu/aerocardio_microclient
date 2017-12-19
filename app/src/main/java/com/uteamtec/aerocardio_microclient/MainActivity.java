@@ -97,11 +97,14 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onEcgOut(RemoteEcg ecg) throws RemoteException {
             //TODO: 这里获取ecg数据显示
+            ecg.toString();
+//            iwebView.evalJs("addEcg(" + ecg.toJson + ")");
         }
 
         @Override
         public void onEcgMarkOut(RemoteEcgMark mark) throws RemoteException {
             //TODO: 这里获取ecgmark数据显示
+//            iwebView.evalJs("addEcgMark(" + mark.toJson + ")");
         }
 
         @Override
