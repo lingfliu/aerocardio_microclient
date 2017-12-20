@@ -28,4 +28,6 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:2.2.2'
     implementation files('libs/aerocardio_microserver_commons-release.aar')
     implementation files('libs/bletool-release.aar')
+
+    compile 'com.google.code.gson:gson:2.8.2'
 }

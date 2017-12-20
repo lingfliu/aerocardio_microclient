@@ -14,6 +14,13 @@ interface MainRemoteCall {
 
     int sendBytes(in RemoteBytes remoteBytes);
 
+    void userRegister(String uid, String pass);
+    void deviceRegister(String mac);
+
+    void setBleMac(String mac);
+
+    String getAppServerState();
+
     void registerRemoteCallback(in MainRemoteCallback cb);
     void unregisterRemoteCallback(in MainRemoteCallback cb);
 }
