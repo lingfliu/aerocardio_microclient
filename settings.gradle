@@ -1,1 +1,1 @@
-include ':app', ':dcloud'
+include ':app', ':dcloud', ':bletool'

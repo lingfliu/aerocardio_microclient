@@ -18,6 +18,10 @@ import com.uteamtec.aerocardio_microserver_commons.types.RemoteEcg;
 import com.uteamtec.aerocardio_microserver_commons.types.RemoteEcgMark;
 import com.uteamtec.bletool.BleComm;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+
 /**
  * 简单的基于aidl的本地跨进程核心服务调用
  */
@@ -52,13 +56,36 @@ public class MainActivity extends AppCompatActivity {
     //这是核心调用的接口，此处不再做二次封装
     MainRemoteCall remoteCall;
 
-    TextView txtView;
+    @BindView(R.id.app_info)
+    TextView appInfo;
+    @BindView(R.id.mark)
+    TextView markOutput;
+    @BindView(R.id.ecg)
+    TextView ecgOutput;
+
+
+    @OnClick(R.id.set_mac)
+    void setMac(){
+        registerDevice(mac);
+    }
+
+    @OnClick(R.id.set_user)
+    void setUser(){
+        registerUser(uid, pass);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+        if (BuildConfig.DEBUG) {
+            CrashHandler.getInstance().init(this);
+        }
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        txtView = findViewById(R.id.txt);
+        ButterKnife.bind(this);
+
+        BleComm.init(getApplicationContext());
 
         Intent serviceIntent = new Intent()
                 .setComponent(new ComponentName(
@@ -75,7 +102,12 @@ public class MainActivity extends AppCompatActivity {
             int res = 0;
 
             remoteCall = MainRemoteCall.Stub.asInterface(iBinder);
+            if (remoteCall == null) return;
+
             try {
+
+                remoteCall.registerRemoteCallback(mainRemoteCallback);
+
                 res = remoteCall.signin(TEST_TOKEN);
                 if (res >= 0) {
                     remoteCall.coreOn();
@@ -105,12 +137,15 @@ public class MainActivity extends AppCompatActivity {
                     switch (i) {
                         case BleComm.STATE_DISCONNECTED:
                             //TODO: 上端在这里处理蓝牙断开事件
+                            appInfo.setText("蓝牙已断开");
                             break;
                         case BleComm.STATE_CONNECTED:
                             //TODO： 这里处理蓝牙连接事件
+                            appInfo.setText("蓝牙已连接上");
                             break;
                         case BleComm.STATE_CONNECTING:
                             //TODO：如果处于正在连接的状态，请避免再次连接
+                            appInfo.setText("蓝牙已正在连接");
                             break;
                         default:
                             break;
@@ -118,56 +153,42 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
 
-
-            try {
-                remoteCall.registerRemoteCallback(mainRemoteCallback);
-            } catch (RemoteException e) {
-                e.printStackTrace();
-            }
-
-            new Thread(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        Thread.sleep(1000);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-
-                    try {
-                        remoteCall.userRegister(uid, pass);
-                        remoteCall.deviceRegister(mac);
-                    } catch (RemoteException e) {
-                        e.printStackTrace();
-                    }
-                }
-            }).start();
         }
 
         @Override
         public void onServiceDisconnected(ComponentName componentName) {
+            if (remoteCall == null) return;
+
             try {
                 remoteCall.signout();
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
+
+            Intent serviceIntent = new Intent()
+                    .setComponent(new ComponentName(
+                            REMOTE_SERVER_PACKAGE,
+                            REMOTE_SERVER_SERVICE));
+            bindService(serviceIntent, serviceConnection, BIND_AUTO_CREATE);
         }
     };
 
-    private final MainRemoteCallback mainRemoteCallback = new MainRemoteCallback() {
+    private final MainRemoteCallback mainRemoteCallback = new MainRemoteCallback.Stub() {
         @Override
         public void onUserRegistered(String uid) throws RemoteException {
             //TODO: 这里处理用户注册通知
+            appInfo.setText("用户注册成功");
         }
 
         @Override
         public void onDeviceRegistered(String mac) throws RemoteException {
             //TODO: 这里处理设备注册通知
+            appInfo.setText("设备注册成功");
         }
 
         @Override
         public void onBleBytesOut(RemoteBytes bytes) throws RemoteException {
-            //TODO: 这里转发字节流给蓝牙连接（上层不需要进行连接）
+            //TODO: 这里转发字节流给蓝牙连接（上层不需要进行管理）
             BleComm.getInstance().send(bytes.getBytes(), true);
         }
 
@@ -176,13 +197,41 @@ public class MainActivity extends AppCompatActivity {
             //TODO: 这里获取ecg数据显示
             Gson gson = new GsonBuilder().create();
             String str = gson.toJson(ecg);
+
+            ecgOutput.setText(str);
 //            iwebView.evalJs("addEcg(" + ecg.toJson + ")");
         }
 
         @Override
         public void onEcgMarkOut(RemoteEcgMark mark) throws RemoteException {
             //TODO: 这里获取ecgmark数据显示
+            Gson gson = new GsonBuilder().create();
+            String str = gson.toJson(mark);
+
+            markOutput.setText(str);
 //            iwebView.evalJs("addEcgMark(" + mark.toJson + ")");
+        }
+
+        @Override
+        public void onServerStateChanged(String state) throws RemoteException {
+            if (state.equals("disconnected")) {
+                //TODO: 这里处理远程服务断开
+                appInfo.setText("远程服务器断开");
+            }
+            else if (state.equals("connected")) {
+                //TODO: 这里处理远程服务正常连接
+                appInfo.setText("远程服务器已连接");
+            }
+            else if (state.equals("login")) {
+                //TODO: 这里处理设备连接用户已登陆
+                appInfo.setText("远程服务器已登陆");
+            }
+        }
+
+        @Override
+        public void onBleDead() throws RemoteException {
+            //TODO: 这里通知应用设备无响应
+            appInfo.setText("设备无反应");
         }
 
         @Override

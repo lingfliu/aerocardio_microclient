@@ -13,4 +13,7 @@ interface MainRemoteCallback {
     void onBleBytesOut(out RemoteBytes bytes);
     void onEcgOut(out RemoteEcg ecg);
     void onEcgMarkOut(out RemoteEcgMark mark);
+
+    void onServerStateChanged(String state);
+    void onBleDead();
 }

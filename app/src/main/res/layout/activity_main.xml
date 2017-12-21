@@ -10,11 +10,44 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Hello World!"
-        android:textSize="24sp"
-        android:id="@+id/txt"
-        app:layout_constraintBottom_toBottomOf="parent"
+        android:textSize="18sp"
+        android:id="@+id/ecg"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toBottomOf="@+id/mark"
+        android:maxLines="10"/>
 
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="设置MAC"
+        android:id="@+id/set_mac"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="设置USER"
+        android:id="@+id/set_user"
+        app:layout_constraintTop_toTopOf="@id/set_mac"
+        app:layout_constraintBottom_toBottomOf="@id/set_mac"
+        app:layout_constraintLeft_toRightOf="@id/set_mac"/>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:maxLines="1"
+        android:id="@+id/app_info"
+        app:layout_constraintTop_toBottomOf="@id/set_mac"
+        app:layout_constraintLeft_toLeftOf="@id/set_mac"
+        android:textSize="18sp"
+        android:text="调用测试"/>
+     <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:maxLines="1"
+        android:id="@+id/mark"
+        app:layout_constraintTop_toBottomOf="@id/app_info"
+        app:layout_constraintLeft_toLeftOf="@id/set_mac"
+        android:textSize="18sp"
+         android:text=""/>
 </android.support.constraint.ConstraintLayout>
