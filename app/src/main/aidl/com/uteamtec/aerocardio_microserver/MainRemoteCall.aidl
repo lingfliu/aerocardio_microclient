@@ -6,10 +6,11 @@ import com.uteamtec.aerocardio_microserver.MainRemoteCallback;
 
 interface MainRemoteCall {
 
-    int signin(in String token);
+    int signin(String token);
     int signout();
     String fetchState();
     int coreOn();
+    int coreReset();
     int coreOff();
 
     int sendBytes(in RemoteBytes remoteBytes);
@@ -19,6 +20,6 @@ interface MainRemoteCall {
 
     String getAppServerState();
 
-    void registerRemoteCallback(in MainRemoteCallback cb);
-    void unregisterRemoteCallback(in MainRemoteCallback cb);
+    int registerRemoteCallback(MainRemoteCallback cb);
+    int unregisterRemoteCallback(MainRemoteCallback cb);
 }

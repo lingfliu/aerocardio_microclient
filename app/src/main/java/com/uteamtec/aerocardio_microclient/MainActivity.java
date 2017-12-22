@@ -7,6 +7,7 @@ import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.TextView;
 
 import com.google.gson.Gson;
@@ -35,7 +36,7 @@ public class MainActivity extends AppCompatActivity {
 
 
     //待连接的mac地址，请自行获取，保存
-    String mac = "80:EA:CA:BD:7A:00";
+    String mac = "80:EA:CA:BD:7A:06";
 
     //用户登陆用id与pass，请自行获取，保存
     String uid = "000012";
@@ -102,11 +103,14 @@ public class MainActivity extends AppCompatActivity {
             int res = 0;
 
             remoteCall = MainRemoteCall.Stub.asInterface(iBinder);
-            if (remoteCall == null) return;
 
             try {
+                res = remoteCall.registerRemoteCallback(mainRemoteCallback);
+                if (res < 0) {
+                    Log.i("A", "microclient: register failed");
+                }
 
-                remoteCall.registerRemoteCallback(mainRemoteCallback);
+                Log.i("A", "microclient: registered callback");
 
                 res = remoteCall.signin(TEST_TOKEN);
                 if (res >= 0) {
@@ -138,6 +142,10 @@ public class MainActivity extends AppCompatActivity {
                         case BleComm.STATE_DISCONNECTED:
                             //TODO: 上端在这里处理蓝牙断开事件
                             appInfo.setText("蓝牙已断开");
+
+                            if (mac != null) {
+                                BleComm.getInstance().reconnect();
+                            }
                             break;
                         case BleComm.STATE_CONNECTED:
                             //TODO： 这里处理蓝牙连接事件
@@ -153,6 +161,8 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
 
+
+            BleComm.getInstance().connect(mac);
         }
 
         @Override
@@ -173,7 +183,7 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    private final MainRemoteCallback mainRemoteCallback = new MainRemoteCallback.Stub() {
+    private class MainRemoteCallbackImpl extends MainRemoteCallback.Stub {
         @Override
         public void onUserRegistered(String uid) throws RemoteException {
             //TODO: 这里处理用户注册通知
@@ -216,7 +226,12 @@ public class MainActivity extends AppCompatActivity {
         public void onServerStateChanged(String state) throws RemoteException {
             if (state.equals("disconnected")) {
                 //TODO: 这里处理远程服务断开
-                appInfo.setText("远程服务器断开");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        appInfo.setText("远程服务器断开");
+                    }
+                });
             }
             else if (state.equals("connected")) {
                 //TODO: 这里处理远程服务正常连接
@@ -231,14 +246,16 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onBleDead() throws RemoteException {
             //TODO: 这里通知应用设备无响应
-            appInfo.setText("设备无反应");
-        }
-
-        @Override
-        public IBinder asBinder() {
-            return null;
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    appInfo.setText("设备无反应");
+                }
+            });
         }
     };
+
+    private final MainRemoteCallbackImpl mainRemoteCallback = new MainRemoteCallbackImpl();
 
     /**
      * 向远程注册用户
@@ -246,6 +263,7 @@ public class MainActivity extends AppCompatActivity {
      * @param pass
      */
     private void registerUser(String uid, String pass) {
+        if (remoteCall == null) return;
         try {
             remoteCall.userRegister(uid, pass);
         } catch (RemoteException e) {
