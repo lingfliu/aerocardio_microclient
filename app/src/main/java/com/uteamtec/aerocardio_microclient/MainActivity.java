@@ -187,13 +187,23 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onUserRegistered(String uid) throws RemoteException {
             //TODO: 这里处理用户注册通知
-            appInfo.setText("用户注册成功");
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    appInfo.setText("用户注册成功");
+                }
+            });
         }
 
         @Override
         public void onDeviceRegistered(String mac) throws RemoteException {
             //TODO: 这里处理设备注册通知
-            appInfo.setText("设备注册成功");
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    appInfo.setText("设备注册成功");
+                }
+            });
         }
 
         @Override
@@ -203,12 +213,17 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        public void onEcgOut(RemoteEcg ecg) throws RemoteException {
+        public void onEcgOut(final RemoteEcg ecg) throws RemoteException {
             //TODO: 这里获取ecg数据显示
-            Gson gson = new GsonBuilder().create();
-            String str = gson.toJson(ecg);
+            final Gson gson = new GsonBuilder().create();
 
-            ecgOutput.setText(str);
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    String str = gson.toJson(ecg);
+                    ecgOutput.setText(str);
+                }
+            });
 //            iwebView.evalJs("addEcg(" + ecg.toJson + ")");
         }
 
@@ -235,11 +250,21 @@ public class MainActivity extends AppCompatActivity {
             }
             else if (state.equals("connected")) {
                 //TODO: 这里处理远程服务正常连接
-                appInfo.setText("远程服务器已连接");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        appInfo.setText("远程服务器已连接");
+                    }
+                });
             }
             else if (state.equals("login")) {
                 //TODO: 这里处理设备连接用户已登陆
-                appInfo.setText("远程服务器已登陆");
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        appInfo.setText("远程服务器已登陆");
+                    }
+                });
             }
         }
 
