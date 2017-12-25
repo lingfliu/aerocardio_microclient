@@ -9,14 +9,11 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
-import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
 
-import com.CrashHandler;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.uteamtec.aerocardio_utils.CrashHandler;
 import com.uteamtec.aerocardio_microserver.MainRemoteCall;
 import com.uteamtec.aerocardio_microserver.MainRemoteCallback;
 import com.uteamtec.aerocardio_microserver_commons.types.RemoteBytes;
