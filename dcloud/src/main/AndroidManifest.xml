@@ -216,7 +216,7 @@
         </activity>
 -->
         <activity
-            android:name="com.HBuilder.integrate.SDK_WebApp"
+            android:name="com.HBuilder.integrate.HAHealth"
             android:configChanges="orientation|keyboardHidden|screenSize|keyboard|navigation|mcc|mnc|fontScale"
             android:label="@string/app_name"
             android:launchMode="singleTask"
@@ -228,6 +228,16 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+
+        <activity
+            android:name="com.HBuilder.integrate.SDK_WebApp"
+            android:configChanges="orientation|keyboardHidden|screenSize|keyboard|navigation|mcc|mnc|fontScale"
+            android:label="@string/app_name"
+            android:launchMode="singleTask"
+            android:screenOrientation="user"
+            android:windowSoftInputMode="adjustResize"
+            android:theme="@style/DCloudTheme"><!--离线配置沉浸式  SDK_WebApp  作为apk入口时  必须设置 SDK_WebApp   的主题为android:theme="@style/DCloudTheme"-->
         </activity>
         <activity
             android:name="com.HBuilder.integrate.SDK_WebView"

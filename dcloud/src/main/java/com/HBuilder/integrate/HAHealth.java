@@ -35,7 +35,7 @@ import io.dcloud.feature.internal.sdk.SDK;
  * 本demo为以WebApp方式集成5+ sdk， 
  *
  */
-public class SDK_WebApp_Demo extends BaseActivity implements BaseActivity.BaseListener{
+public class HAHealth extends BaseActivity implements BaseActivity.BaseListener{
 
 	boolean doHardAcc = true;
 	EntryProxy mEntryProxy = null;
