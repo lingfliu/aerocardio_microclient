@@ -1,12 +1,12 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 26
-    buildToolsVersion '27.0.1'
+    compileSdkVersion 27
+    buildToolsVersion '27.0.2'
     defaultConfig {
         applicationId "com.HBuilder.integrate"
-        minSdkVersion 14
-        targetSdkVersion 21 //建议此属性值设为21 io.dcloud.PandoraEntry 作为apk入口时   必须设置 targetSDKVersion>=21 沉浸式才生效
+        minSdkVersion 19
+        targetSdkVersion 27 //建议此属性值设为21 io.dcloud.PandoraEntry 作为apk入口时   必须设置 targetSDKVersion>=21 沉浸式才生效
 
         versionCode 1
         versionName "1.0"
@@ -23,5 +23,7 @@ android {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     //compile 'com.android.support:appcompat-v7:26.+'
-
+    compile project(':bletool')
+    implementation files('libs/aerocardio_microserver_commons-release.aar')
+    compile 'com.google.code.gson:gson:2.8.2'
 }

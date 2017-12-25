@@ -1,5 +1,23 @@
 package com.HBuilder.integrate;
 
+import android.app.Activity;
+import android.app.ProgressDialog;
+import android.content.Context;
+import android.content.Intent;
+import android.content.res.Configuration;
+import android.os.Bundle;
+import android.view.KeyEvent;
+import android.view.Menu;
+import android.view.View;
+import android.view.ViewGroup;
+import android.view.Window;
+import android.widget.FrameLayout;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.uteamtec.aerocardio_microserver_commons.types.RemoteEcg;
+import com.uteamtec.aerocardio_microserver_commons.types.RemoteEcgMark;
+
 import io.dcloud.EntryProxy;
 import io.dcloud.RInformation;
 import io.dcloud.common.DHInterface.IApp;
@@ -12,28 +30,12 @@ import io.dcloud.common.DHInterface.IWebview;
 import io.dcloud.common.DHInterface.IWebviewStateListener;
 import io.dcloud.common.util.ImageLoaderUtil;
 import io.dcloud.feature.internal.sdk.SDK;
-import android.app.Activity;
-import android.app.ProgressDialog;
-import android.content.Context;
-import android.content.Intent;
-import android.content.res.Configuration;
-import android.os.Bundle;
-import android.util.Log;
-import android.view.KeyEvent;
-import android.view.Menu;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.Window;
-import android.widget.FrameLayout;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 /**
  * 本demo为以WebApp方式集成5+ sdk， 
  *
  */
-public class SDK_WebApp extends Activity {
+public class SDK_WebApp_Demo extends BaseActivity implements BaseActivity.BaseListener{
 
 	boolean doHardAcc = true;
 	EntryProxy mEntryProxy = null;
@@ -55,6 +57,9 @@ public class SDK_WebApp extends Activity {
 			mEntryProxy.onCreate(this, savedInstanceState, SDK.IntegratedMode.WEBAPP, null);
 			setContentView(f);
 		}
+
+		//设置主监听器
+		this.setListener(this);
 	}
 
 	@Override
@@ -121,7 +126,9 @@ public class SDK_WebApp extends Activity {
 		mEntryProxy.onActivityExecute(this, SysEventType.onActivityResult, new Object[] { requestCode, resultCode, data });
 	}
 
-class WebappModeListener implements ICoreStatusListener, IOnCreateSplashView {
+
+
+	class WebappModeListener implements ICoreStatusListener, IOnCreateSplashView {
 	Activity activity;
 	View splashView = null;
 	ViewGroup rootView;
@@ -254,10 +261,55 @@ class WebappModeListener implements ICoreStatusListener, IOnCreateSplashView {
 		return null;
 	}
 
-	@Override
-	public void onCloseSplash() {
-		rootView.removeView(splashView);
+		@Override
+		public void onCloseSplash() {
+			rootView.removeView(splashView);
 	}
-}
+	}
 
+	///////////////////////////////////////////////////////
+	//TODO: 所有的事件处理请从这里统一转接到你们自己的app上去
+	///////////////////////////////////////////////////////
+	@Override
+	public void onBleDead() {
+
+	}
+
+	@Override
+	public void onUserRegistered(String uid) {
+
+	}
+
+	@Override
+	public void onDeviceRegistered(String mac) {
+
+	}
+
+	@Override
+	public void onServerStateChanged(String state) {
+
+	}
+
+	@Override
+	public void onBleStateChanged(String state) {
+
+	}
+
+	@Override
+	public void onRemoteException(Exception e) {
+
+	}
+
+	@Override
+	public void onEcgOut(RemoteEcg ecg) {
+		final Gson gson = new GsonBuilder().create();
+		String toWeb = gson.toJson(ecg);
+		//TODO: example, 这里向web端扔数据，请自行实现
+		iWebview.evalJS("");
+	}
+
+	@Override
+	public void onEcgMarkOut(RemoteEcgMark mark) {
+
+	}
 }

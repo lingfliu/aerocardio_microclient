@@ -1,13 +1,18 @@
-package com.uteamtec.aerocardio_microclient;
+package com.HBuilder.integrate;
 
+import android.annotation.TargetApi;
+import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.os.Build;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
-import android.widget.TextView;
+import android.util.Log;
+import android.view.Window;
+import android.view.WindowManager;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -18,14 +23,12 @@ import com.uteamtec.aerocardio_microserver_commons.types.RemoteEcg;
 import com.uteamtec.aerocardio_microserver_commons.types.RemoteEcgMark;
 import com.uteamtec.bletool.BleComm;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
 
 /**
- * 简单的基于aidl的本地跨进程核心服务调用
+ * Created by liulingfeng on 2017/12/25.
  */
-public class MainActivity extends AppCompatActivity {
+
+public class BaseActivity extends AppCompatActivity{
     //调用微服务的信令，每个app拥有各自的信令，这个token是com.uteamtec.aerocardio_microclient的包所用的
     private final String TEST_TOKEN = "1d23b3235c2396e37bc060179e1598fe2d685e370833f7dfe9af1904344ce3ed";
 
@@ -33,78 +36,55 @@ public class MainActivity extends AppCompatActivity {
     private final String REMOTE_SERVER_PACKAGE = "com.uteamtec.aerocardio_microserver";
     private final String REMOTE_SERVER_SERVICE = "com.uteamtec.aerocardio_microserver.MainService";
 
+    String uid;
+    String pass;
+    String mac;
 
-    //待连接的mac地址，请自行获取，保存
-    String mac = "80:EA:CA:BD:7A:06";
-
-    //用户登陆用id与pass，请自行获取，保存
-    String uid = "000012";
-    String pass = "000012";
-
-    public void setUser(String uid, String pass) {
+    void setUser(String uid, String pass) {
         this.uid = uid;
         this.pass = pass;
     }
 
-    /**
-     *
-     * @param mac 设备的mac地址
-     * @param model 设备型号，目前只支持model=3
-     */
-    public void setDevice(String mac, int model) {
-        switch (model) {
-            case 3:
-                this.mac = mac;
-                break;
-            default:
-                break;
-        }
+    void setMac(String mac) {
+        this.mac = mac;
     }
+
 
     //这是核心调用的接口，此处不再做二次封装
     MainRemoteCall remoteCall;
 
-
-    //TODO: 以下是样例activity的ui交互，请自行更改交互的逻辑
-    @BindView(R.id.app_info)
-    TextView appInfo;
-    @BindView(R.id.mark)
-    TextView markOutput;
-    @BindView(R.id.ecg)
-    TextView ecgOutput;
-
-
-    @OnClick(R.id.set_mac)
-    void setMac(){
-        registerDevice(mac);
-    }
-
-    @OnClick(R.id.set_user)
-    void setUser(){
-        registerUser(uid, pass);
+    //TODO: override this method
+    int fetchLayoutResource() {
+        return 0;
     }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
 
-        if (BuildConfig.DEBUG) {
-            CrashHandler.getInstance().init(this);
+        //沉浸式设置
+        //设置无标题
+        supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
+        //隐藏导航键
+        if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
+            getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_NAVIGATION);
         }
 
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        ButterKnife.bind(this);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            setTranslucentStatus(true);
+        }
 
-        //初始化蓝牙
+        //Initialize base classes
         BleComm.init(getApplicationContext());
-
-        //启动远程服务，这里需要手机允许关联启动，具体的权限设置需要自行实现
         Intent serviceIntent = new Intent()
                 .setComponent(new ComponentName(
                         REMOTE_SERVER_PACKAGE,
                         REMOTE_SERVER_SERVICE));
+
         startService(serviceIntent);
         bindService(serviceIntent, serviceConnection, BIND_AUTO_CREATE);
+
     }
 
     private final ServiceConnection serviceConnection = new ServiceConnection() {
@@ -115,10 +95,16 @@ public class MainActivity extends AppCompatActivity {
             remoteCall = MainRemoteCall.Stub.asInterface(iBinder);
 
             try {
+                res = remoteCall.registerRemoteCallback(mainRemoteCallback);
+                if (res < 0) {
+                    Log.i("A", "microclient: register failed");
+                }
+
+                Log.i("A", "microclient: registered callback");
+
                 res = remoteCall.signin(TEST_TOKEN);
                 if (res >= 0) {
                     remoteCall.coreOn();
-                    remoteCall.registerRemoteCallback(mainRemoteCallback);
                 }
             } catch (RemoteException e) {
                 e.printStackTrace();
@@ -145,7 +131,9 @@ public class MainActivity extends AppCompatActivity {
                     switch (i) {
                         case BleComm.STATE_DISCONNECTED:
                             //TODO: 上端在这里处理蓝牙断开事件
-                            appInfo.setText("蓝牙已断开");
+                            if (listener != null) {
+                                listener.onBleStateChanged("disconnected");
+                            }
 
                             if (mac != null) {
                                 BleComm.getInstance().reconnect();
@@ -153,11 +141,11 @@ public class MainActivity extends AppCompatActivity {
                             break;
                         case BleComm.STATE_CONNECTED:
                             //TODO： 这里处理蓝牙连接事件
-                            appInfo.setText("蓝牙已连接上");
+                            listener.onBleStateChanged("connected");
                             break;
                         case BleComm.STATE_CONNECTING:
                             //TODO：如果处于正在连接的状态，请避免再次连接
-                            appInfo.setText("蓝牙已正在连接");
+                            listener.onBleStateChanged("connecting");
                             break;
                         default:
                             break;
@@ -183,29 +171,53 @@ public class MainActivity extends AppCompatActivity {
                     .setComponent(new ComponentName(
                             REMOTE_SERVER_PACKAGE,
                             REMOTE_SERVER_SERVICE));
-            bindService(serviceIntent, serviceConnection, BIND_AUTO_CREATE);
+            bindService(serviceIntent, serviceConnection, BIND_AUTO_CREATE);        }
+
+        @Override
+        public void onBindingDied(ComponentName name) {
+            //TODO: 这里处理连接中断的策略
+            if(listener != null) {
+                listener.onRemoteException(new RemoteException("remote connection died"));
+            }
         }
     };
 
+    @TargetApi(19)
+    private void setTranslucentStatus(boolean on) {
+        Window win = getWindow();
+        WindowManager.LayoutParams winParams = win.getAttributes();
+        final int bits = WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS;
+        if (on) {
+            winParams.flags |= bits;
+        } else {
+            winParams.flags &= ~bits;
+        }
+        win.setAttributes(winParams);
+    }
+
     private class MainRemoteCallbackImpl extends MainRemoteCallback.Stub {
         @Override
-        public void onUserRegistered(String uid) throws RemoteException {
+        public void onUserRegistered(final String uid) throws RemoteException {
             //TODO: 这里处理用户注册通知
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    appInfo.setText("用户注册成功");
+                    if(listener != null) {
+                        listener.onUserRegistered(uid);
+                    }
                 }
             });
         }
 
         @Override
-        public void onDeviceRegistered(String mac) throws RemoteException {
+        public void onDeviceRegistered(final String mac) throws RemoteException {
             //TODO: 这里处理设备注册通知
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    appInfo.setText("设备注册成功");
+                    if (listener != null) {
+                        listener.onDeviceRegistered(mac);
+                    }
                 }
             });
         }
@@ -219,71 +231,47 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onEcgOut(final RemoteEcg ecg) throws RemoteException {
             //TODO: 这里获取ecg数据显示
-            final Gson gson = new GsonBuilder().create();
-
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    String str = gson.toJson(ecg);
-                    ecgOutput.setText(str);
-                }
-            });
+            if (listener != null) {
+                listener.onEcgOut(ecg);
+            }
         }
 
         @Override
         public void onEcgMarkOut(RemoteEcgMark mark) throws RemoteException {
             //TODO: 这里获取ecgmark数据显示
-            Gson gson = new GsonBuilder().create();
-            final String str = gson.toJson(mark);
-
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    markOutput.setText(str);
-                }
-            });
+            if (listener != null) {
+                listener.onEcgMarkOut(mark);
+            }
         }
 
         @Override
         public void onServerStateChanged(String state) throws RemoteException {
             if (state.equals("disconnected")) {
                 //TODO: 这里处理远程服务断开
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        appInfo.setText("远程服务器断开");
-                    }
-                });
+                if (listener != null) {
+                    listener.onServerStateChanged(state);
+                }
             }
             else if (state.equals("connected")) {
                 //TODO: 这里处理远程服务正常连接
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        appInfo.setText("远程服务器已连接");
-                    }
-                });
+                if (listener != null) {
+                    listener.onServerStateChanged(state);
+                }
             }
             else if (state.equals("login")) {
                 //TODO: 这里处理设备连接用户已登陆
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        appInfo.setText("远程服务器已登陆");
-                    }
-                });
+                if (listener != null) {
+                    listener.onServerStateChanged(state);
+                }
             }
         }
 
         @Override
         public void onBleDead() throws RemoteException {
             //TODO: 这里通知应用设备无响应
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    appInfo.setText("设备无反应");
-                }
-            });
+            if (listener != null) {
+                listener.onBleDead();
+            }
         }
     };
 
@@ -313,5 +301,22 @@ public class MainActivity extends AppCompatActivity {
         } catch (RemoteException e) {
             e.printStackTrace();
         }
+    }
+
+    private BaseListener listener;
+
+    public void setListener(BaseListener listener) {
+        this.listener = listener;
+    }
+
+    public interface BaseListener {
+        void onBleDead();
+        void onUserRegistered(String uid);
+        void onDeviceRegistered(String mac);
+        void onServerStateChanged(String state);
+        void onBleStateChanged(String state);
+        void onRemoteException(Exception e);
+        void onEcgOut(RemoteEcg ecg);
+        void onEcgMarkOut(RemoteEcgMark mark);
     }
 }
