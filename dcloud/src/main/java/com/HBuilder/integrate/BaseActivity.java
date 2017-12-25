@@ -14,6 +14,7 @@ import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
 
+import com.CrashHandler;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.uteamtec.aerocardio_microserver.MainRemoteCall;
@@ -28,7 +29,7 @@ import com.uteamtec.bletool.BleComm;
  * Created by liulingfeng on 2017/12/25.
  */
 
-public class BaseActivity extends AppCompatActivity{
+public class BaseActivity extends Activity{
     //调用微服务的信令，每个app拥有各自的信令，这个token是com.uteamtec.aerocardio_microclient的包所用的
     private final String TEST_TOKEN = "1d23b3235c2396e37bc060179e1598fe2d685e370833f7dfe9af1904344ce3ed";
 
@@ -53,18 +54,17 @@ public class BaseActivity extends AppCompatActivity{
     //这是核心调用的接口，此处不再做二次封装
     MainRemoteCall remoteCall;
 
-    //TODO: override this method
-    int fetchLayoutResource() {
-        return 0;
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (BuildConfig.DEBUG) {
+            CrashHandler.getInstance().init(this);
+        }
 
         //沉浸式设置
         //设置无标题
-        supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
         //隐藏导航键
         if (Build.VERSION.SDK_INT > Build.VERSION_CODES.KITKAT) {
             getWindow().addFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);

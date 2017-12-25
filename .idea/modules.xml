@@ -5,7 +5,9 @@
       <module fileurl="file://$PROJECT_DIR$/aerocardio_microclient.iml" filepath="$PROJECT_DIR$/aerocardio_microclient.iml" />
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
       <module fileurl="file://$PROJECT_DIR$/bletool/bletool.iml" filepath="$PROJECT_DIR$/bletool/bletool.iml" />
+      <module fileurl="file://D:\github\aerocardio_microclient\bletool\bletool.iml" filepath="D:\github\aerocardio_microclient\bletool\bletool.iml" />
       <module fileurl="file://$PROJECT_DIR$/dcloud/dcloud.iml" filepath="$PROJECT_DIR$/dcloud/dcloud.iml" />
+      <module fileurl="file://D:\github\aerocardio_microclient\dcloud\dcloud.iml" filepath="D:\github\aerocardio_microclient\dcloud\dcloud.iml" />
     </modules>
   </component>
 </project>

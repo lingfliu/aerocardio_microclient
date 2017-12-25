@@ -26,4 +26,5 @@ dependencies {
     compile project(':bletool')
     implementation files('libs/aerocardio_microserver_commons-release.aar')
     compile 'com.google.code.gson:gson:2.8.2'
+    compile 'com.android.support:multidex:1.0.1'
 }
