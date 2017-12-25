@@ -216,7 +216,7 @@
         </activity>
 -->
         <activity
-            android:name="com.HBuilder.integrate.HAHealth"
+            android:name="com.HBuilder.integrate.HAHealthMainActivity"
             android:configChanges="orientation|keyboardHidden|screenSize|keyboard|navigation|mcc|mnc|fontScale"
             android:label="@string/app_name"
             android:launchMode="singleTask"
