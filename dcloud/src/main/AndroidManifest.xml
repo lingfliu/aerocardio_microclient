@@ -9,6 +9,14 @@
         android:resizeable="true"
         android:smallScreens="true" />
 
+    <!--蓝牙连接与位置服务需要的权限，Android SDK 版本23以上部分权限需要动态申请-->
+    <uses-permission android:name="android.permission.BLUETOOTH" />
+    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" />
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE"/>
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
     <!-- HBuilder Runtime 基础权限   begin -->
     <!-- 联网 -->

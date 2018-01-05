@@ -13,9 +13,9 @@ import android.util.Log;
 import android.view.Window;
 import android.view.WindowManager;
 
+import com.uteamtec.aerocardio_microserver_commons.MainRemoteCall;
+import com.uteamtec.aerocardio_microserver_commons.MainRemoteCallback;
 import com.uteamtec.aerocardio_utils.CrashHandler;
-import com.uteamtec.aerocardio_microserver.MainRemoteCall;
-import com.uteamtec.aerocardio_microserver.MainRemoteCallback;
 import com.uteamtec.aerocardio_microserver_commons.types.RemoteBytes;
 import com.uteamtec.aerocardio_microserver_commons.types.RemoteEcg;
 import com.uteamtec.aerocardio_microserver_commons.types.RemoteEcgMark;
@@ -27,16 +27,16 @@ import com.uteamtec.bletool.BleComm;
  */
 
 public class BaseActivity extends Activity{
-    //调用微服务的信令，每个app拥有各自的信令，这个token是com.uteamtec.aerocardio_microclient的包所用的
-    private final String TEST_TOKEN = "1d23b3235c2396e37bc060179e1598fe2d685e370833f7dfe9af1904344ce3ed";
+    //调用微服务的信令，每个app拥有各自的信令，这个token是com.HBuilder.integrate包所用的
+    private final String TOKEN = "d53a8f0acf62abb1547dd5e02c91dc59138ce8c37aab133ffbc67a723f993927";
 
     //这两个不要修改
     private final String REMOTE_SERVER_PACKAGE = "com.uteamtec.aerocardio_microserver";
     private final String REMOTE_SERVER_SERVICE = "com.uteamtec.aerocardio_microserver.MainService";
 
-    String uid;
-    String pass;
-    String mac;
+    String uid = "56490283";
+    String pass = "0000000000000000";
+    String mac = "80:EA:CA:BD:7A:06";
 
     void setUser(String uid, String pass) {
         this.uid = uid;
@@ -46,7 +46,6 @@ public class BaseActivity extends Activity{
     void setMac(String mac) {
         this.mac = mac;
     }
-
 
     //这是核心调用的接口，此处不再做二次封装
     MainRemoteCall remoteCall;
@@ -74,6 +73,59 @@ public class BaseActivity extends Activity{
 
         //Initialize base classes
         BleComm.init(getApplicationContext());
+        BleComm.getInstance().setDataListener(new BleComm.BleDataListener() {
+            @Override
+            public void onDataReceived(byte[] data) {
+                try {
+                    Log.i("A", "microclient: send bytes to remote server");
+                    if (remoteCall != null) {
+                        remoteCall.sendBytes(new RemoteBytes(data));
+                    }
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                    onRemoteServerDisconnected();
+                }
+            }
+
+            @Override
+            public void onDataSent(byte[] data) {
+
+            }
+        });
+
+        BleComm.getInstance().setStateListener(new BleComm.BleStateListener() {
+            @Override
+            public void onBleStateChanged(int i) {
+                Log.i("A", "blecomm: state changed = " + i);
+                switch (i) {
+                    case BleComm.STATE_DISCONNECTED:
+                        //TODO: 上端在这里处理蓝牙断开事件
+                        if (listener != null) {
+                            listener.onBleStateChanged("disconnected");
+                        }
+
+                        if (mac != null) {
+                            BleComm.getInstance().reconnect();
+                        }
+                        break;
+                    case BleComm.STATE_CONNECTED:
+                        //TODO： 这里处理蓝牙连接事件
+                        if (listener != null) {
+                            listener.onBleStateChanged("connected");
+                        }
+                        break;
+                    case BleComm.STATE_CONNECTING:
+                        //TODO：如果处于正在连接的状态，请避免再次连接
+                        if (listener != null) {
+                            listener.onBleStateChanged("connecting");
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+        });
+
         Intent serviceIntent = new Intent()
                 .setComponent(new ComponentName(
                         REMOTE_SERVER_PACKAGE,
@@ -92,63 +144,25 @@ public class BaseActivity extends Activity{
             remoteCall = MainRemoteCall.Stub.asInterface(iBinder);
 
             try {
-                res = remoteCall.registerRemoteCallback(mainRemoteCallback);
-                if (res < 0) {
-                    Log.i("A", "microclient: register failed");
-                }
-
-                Log.i("A", "microclient: registered callback");
-
-                res = remoteCall.signin(TEST_TOKEN);
+                res = remoteCall.signin(TOKEN);
                 if (res >= 0) {
                     remoteCall.coreOn();
+                }
+                else {
+                    Log.i("A", "microclient: signin failed");
+                }
+
+                res = remoteCall.registerRemoteCallback(mainRemoteCallback);
+                if (res < 0) {
+                    Log.i("A", "microclient: register callback failed");
                 }
             } catch (RemoteException e) {
                 e.printStackTrace();
             }
 
-            BleComm.getInstance().setDataListener(new BleComm.BleDataListener() {
-                @Override
-                public void onDataReceived(byte[] bytes) {
-                    try {
-                        remoteCall.sendBytes(new RemoteBytes(bytes));
-                    } catch (RemoteException e) {
-                        e.printStackTrace();
-                    }
-                }
+            Log.i("A", "microclient: register ble listeners");
 
-                @Override
-                public void onDataSent(byte[] bytes) {
-                }
-            });
 
-            BleComm.getInstance().setStateListener(new BleComm.BleStateListener() {
-                @Override
-                public void onBleStateChanged(int i) {
-                    switch (i) {
-                        case BleComm.STATE_DISCONNECTED:
-                            //TODO: 上端在这里处理蓝牙断开事件
-                            if (listener != null) {
-                                listener.onBleStateChanged("disconnected");
-                            }
-
-                            if (mac != null) {
-                                BleComm.getInstance().reconnect();
-                            }
-                            break;
-                        case BleComm.STATE_CONNECTED:
-                            //TODO： 这里处理蓝牙连接事件
-                            listener.onBleStateChanged("connected");
-                            break;
-                        case BleComm.STATE_CONNECTING:
-                            //TODO：如果处于正在连接的状态，请避免再次连接
-                            listener.onBleStateChanged("connecting");
-                            break;
-                        default:
-                            break;
-                    }
-                }
-            });
 
 
             BleComm.getInstance().connect(mac);
@@ -164,11 +178,13 @@ public class BaseActivity extends Activity{
                 e.printStackTrace();
             }
 
-            Intent serviceIntent = new Intent()
-                    .setComponent(new ComponentName(
-                            REMOTE_SERVER_PACKAGE,
-                            REMOTE_SERVER_SERVICE));
-            bindService(serviceIntent, serviceConnection, BIND_AUTO_CREATE);        }
+            //断开自动重连服务，可选设置
+//            Intent serviceIntent = new Intent()
+//                    .setComponent(new ComponentName(
+//                            REMOTE_SERVER_PACKAGE,
+//                            REMOTE_SERVER_SERVICE));
+//            bindService(serviceIntent, serviceConnection, BIND_AUTO_CREATE);
+        }
 
         @Override
         public void onBindingDied(ComponentName name) {
@@ -222,12 +238,17 @@ public class BaseActivity extends Activity{
         @Override
         public void onBleBytesOut(RemoteBytes bytes) throws RemoteException {
             //TODO: 这里转发字节流给蓝牙连接（上层不需要进行管理）
+            String str = "";
+            for (byte b : bytes.getBytes())
+                str += " " + String.valueOf(b&0x00ff);
+            Log.i("A", "microclient: server sent bytes back, length = " + str.length() + " content = " + str);
             BleComm.getInstance().send(bytes.getBytes(), true);
         }
 
         @Override
         public void onEcgOut(final RemoteEcg ecg) throws RemoteException {
             //TODO: 这里获取ecg数据显示
+            Log.i("A", "microclient: server send ecg back, start_time = " + ecg.getStartTime());
             if (listener != null) {
                 listener.onEcgOut(ecg);
             }
@@ -285,6 +306,7 @@ public class BaseActivity extends Activity{
             remoteCall.userRegister(uid, pass);
         } catch (RemoteException e) {
             e.printStackTrace();
+            onRemoteServerDisconnected();
         }
     }
 
@@ -297,7 +319,19 @@ public class BaseActivity extends Activity{
             remoteCall.deviceRegister(mac);
         } catch (RemoteException e) {
             e.printStackTrace();
+            onRemoteServerDisconnected();
         }
+    }
+
+
+    //处理连接断开的异常
+    private void onRemoteServerDisconnected(){
+//        remoteCall = null;
+//        Intent serviceIntent = new Intent()
+//                    .setComponent(new ComponentName(
+//                            REMOTE_SERVER_PACKAGE,
+//                            REMOTE_SERVER_SERVICE));
+//            bindService(serviceIntent, serviceConnection, BIND_AUTO_CREATE);
     }
 
     private BaseListener listener;

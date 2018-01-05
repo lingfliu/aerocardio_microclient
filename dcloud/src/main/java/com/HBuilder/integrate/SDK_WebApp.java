@@ -171,6 +171,7 @@ public class SDK_WebApp extends BaseActivity implements BaseActivity.BaseListene
 					rootView.addView(view, 0);
 
 					iWebview = (IWebview) pArgs;
+					//TODO: 这里进行初始化操作
 
 					break;
 				case IWebviewStateListener.ON_PAGE_STARTED:
