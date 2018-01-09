@@ -36,7 +36,7 @@ public class BaseActivity extends Activity{
 
     String uid = "56490283";
     String pass = "0000000000000000";
-    String mac = "80:EA:CA:BD:7A:06";
+    String mac = "80:EA:CA:BC:7A:11";
 
     void setUser(String uid, String pass) {
         this.uid = uid;
